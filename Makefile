@@ -25,3 +25,6 @@ down:
 
 run_bench:
 	bench/bin/bench_linux run --assetdir=webapp/frontend/dist --target=http://0.0.0.0:8080 --payment=http://0.0.0.0:5000
+
+restart:
+	docker-compose -f webapp/docker-compose.yml -f webapp/docker-compose.go.yml restart
