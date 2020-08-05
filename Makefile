@@ -16,3 +16,12 @@ payment:
 
 bench:
 	cd bench && make && cp -av bin/bench_linux ../ansible/roles/benchmark/files/bench && cp -av bin/benchworker_linux ../ansible/roles/benchmark/files/benchworker
+
+up:
+	docker-compose -f webapp/docker-compose.yml -f webapp/docker-compose.go.yml up -d
+
+down:
+	docker-compose -f webapp/docker-compose.yml -f webapp/docker-compose.go.yml down
+
+run_bench:
+	bench/bin/bench_linux run --assetdir=webapp/frontend/dist --target=http://0.0.0.0:8080 --payment=http://0.0.0.0:5000
