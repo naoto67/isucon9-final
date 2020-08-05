@@ -198,3 +198,8 @@ type InitializeResponse struct {
 	AvailableDays int    `json:"available_days"`
 	Language      string `json:"language"`
 }
+
+type SeatAndReservation struct {
+	Seat        SeatReservation
+	Reservation Reservation
+}

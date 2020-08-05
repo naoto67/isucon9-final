@@ -604,51 +604,57 @@ func trainSeatsHandler(w http.ResponseWriter, r *http.Request) {
 
 	var seatInformationList []SeatInformation
 
-	for _, seat := range seatList {
+	query = `
+SELECT s.*, r.* FROM seat_reservations s, reservations r WHERE r.date=? AND r.train_class=? AND r.train_name=? AND car_number=?  `
+	rows, err := dbx.Query(query, date.Format("2006/01/02"), trainClass, trainName, carNumber)
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	defer rows.Close()
 
-		s := SeatInformation{seat.SeatRow, seat.SeatColumn, seat.SeatClass, seat.IsSmokingSeat, false}
-
-		seatReservationList := []SeatReservation{}
-
-		query := `
-SELECT s.*
-FROM seat_reservations s, reservations r
-WHERE
-	r.date=? AND r.train_class=? AND r.train_name=? AND car_number=? AND seat_row=? AND seat_column=?
-`
-
-		err = dbx.Select(
-			&seatReservationList, query,
-			date.Format("2006/01/02"),
-			seat.TrainClass,
-			trainName,
-			seat.CarNumber,
-			seat.SeatRow,
-			seat.SeatColumn,
-		)
-		if err != nil {
+	seatResDict := map[string]SeatAndReservation{}
+	for rows.Next() {
+		var s SeatReservation
+		var r Reservation
+		if err = rows.Scan(
+			&s.ReservationId,
+			&s.CarNumber,
+			&s.SeatRow,
+			&s.SeatColumn,
+			&r.ReservationId,
+			&r.UserId,
+			&r.Date,
+			&r.TrainClass,
+			&r.TrainName,
+			&r.Departure,
+			&r.Arrival,
+			&r.Status,
+			&r.PaymentId,
+			&r.Adult,
+			&r.Child,
+			&r.Amount,
+		); err != nil {
 			errorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		key := fmt.Sprintf("%d-%s", s.SeatRow, s.SeatColumn)
+		seatResDict[key] = SeatAndReservation{Seat: s, Reservation: r}
+	}
 
-		fmt.Println(seatReservationList)
+	for _, seat := range seatList {
 
-		for _, seatReservation := range seatReservationList {
-			reservation := Reservation{}
-			query = "SELECT * FROM reservations WHERE reservation_id=?"
-			err = dbx.Get(&reservation, query, seatReservation.ReservationId)
-			if err != nil {
-				panic(err)
-			}
-
+		s := SeatInformation{seat.SeatRow, seat.SeatColumn, seat.SeatClass, seat.IsSmokingSeat, false}
+		key := fmt.Sprintf("%d-%s", s.Row, s.Column)
+		if v, ok := seatResDict[key]; ok {
 			var departureStation, arrivalStation Station
 			query = "SELECT * FROM station_master WHERE name=?"
 
-			err = dbx.Get(&departureStation, query, reservation.Departure)
+			err = dbx.Get(&departureStation, query, v.Reservation.Departure)
 			if err != nil {
 				panic(err)
 			}
-			err = dbx.Get(&arrivalStation, query, reservation.Arrival)
+			err = dbx.Get(&arrivalStation, query, v.Reservation.Arrival)
 			if err != nil {
 				panic(err)
 			}
@@ -676,7 +682,6 @@ WHERE
 
 			}
 		}
-
 		fmt.Println(s.IsOccupied)
 		seatInformationList = append(seatInformationList, s)
 	}
