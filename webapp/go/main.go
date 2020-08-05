@@ -741,6 +741,14 @@ func trainReservationHandler(w http.ResponseWriter, r *http.Request) {
 		reservationResponse(w http.ResponseWriter, errCode int, id int, ok bool, message string)
 	*/
 
+	// userID取得。ログインしてないと怒られる。
+	user, errCode, errMsg := getUser(r)
+	if errCode != http.StatusOK {
+		errorResponse(w, errCode, errMsg)
+		log.Printf("%s", errMsg)
+		return
+	}
+
 	// json parse
 	req := new(TrainReservationRequest)
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -1282,15 +1290,6 @@ func trainReservationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	sumFare := (req.Adult * fare) + (req.Child*fare)/2
 	fmt.Println("SUMFARE")
-
-	// userID取得。ログインしてないと怒られる。
-	user, errCode, errMsg := getUser(r)
-	if errCode != http.StatusOK {
-		tx.Rollback()
-		errorResponse(w, errCode, errMsg)
-		log.Printf("%s", errMsg)
-		return
-	}
 
 	//予約ID発行と予約情報登録
 	query = "INSERT INTO `reservations` (`user_id`, `date`, `train_class`, `train_name`, `departure`, `arrival`, `status`, `payment_id`, `adult`, `child`, `amount`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
