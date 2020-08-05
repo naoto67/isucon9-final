@@ -37,7 +37,9 @@ CREATE TABLE `seat_master` (
   `seat_column` enum('A', 'B', 'C', 'D', 'E') NOT NULL,
   `seat_row` int(11) NOT NULL,
   `seat_class` enum('premium', 'reserved', 'non-reserved') NOT NULL,
-  `is_smoking_seat` tinyint(1) NOT NULL
+  `is_smoking_seat` tinyint(1) NOT NULL,
+  INDEX smk_idx (`train_class`, `seat_class`, `is_smoking_seat`),
+  INDEX primary_idx (`car_number`, `train_class`, `seat_row`, `seat_column`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 DROP TABLE IF EXISTS `seat_reservations`;
@@ -66,7 +68,8 @@ CREATE TABLE `train_master` (
   `train_name` varchar(100) NOT NULL,
   `start_station` varchar(100) NOT NULL,
   `last_station` varchar(100) NOT NULL,
-  `is_nobori` tinyint(1) NOT NULL
+  `is_nobori` tinyint(1) NOT NULL,
+  INDEX primary_idx (`date`, `train_class`, `train_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 DROP TABLE IF EXISTS `train_timetable_master`;
