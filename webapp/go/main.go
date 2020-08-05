@@ -65,6 +65,7 @@ func errorResponse(w http.ResponseWriter, errCode int, message string) {
 		"message":  message,
 	}
 	errResp, _ := json.Marshal(e)
+	fmt.Println("DEBUG_ERROR_RESPONSE: ", message)
 
 	w.WriteHeader(errCode)
 	w.Write(errResp)
