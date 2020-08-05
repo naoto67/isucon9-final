@@ -5,4 +5,4 @@ RUN apt-get update && apt-get -y install mariadb-client
 ENV GO111MODULE=on
 
 WORKDIR /go/src/webapp
-CMD ["go", "run", "main.go", "utils.go", "model.go"]
+CMD ["go", "run", "main.go", "model.go", "reserve_handler.go",  "utils.go", "cache.go"]
