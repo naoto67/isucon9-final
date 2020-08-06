@@ -18,6 +18,7 @@ bench:
 	cd bench && make && cp -av bin/bench_linux ../ansible/roles/benchmark/files/bench && cp -av bin/benchworker_linux ../ansible/roles/benchmark/files/benchworker
 
 up:
+	sudo rm webapp/nginx/conf.d/access.log
 	docker-compose -f webapp/docker-compose.yml -f webapp/docker-compose.go.yml up
 
 down:
@@ -30,5 +31,5 @@ restart:
 	docker-compose -f webapp/docker-compose.yml -f webapp/docker-compose.go.yml restart
 
 alp:
-	sudo cat webapp/nginx/conf.d/access.log | alp ltsv -r --sort=sum | head -n 30
-	sudo cat webapp/nginx/conf.d/access.log | alp ltsv -r --sort=sum --filters 'Method in ["GET"]' | head -n 30
+	sudo cat webapp/nginx/conf.d/access.log | alp ltsv -r --sort=sum -m '^/api/user/reservations/.+' | head -n 30
+	sudo cat webapp/nginx/conf.d/access.log | alp ltsv -r --sort=sum -m '^/api/user/reservations/.+' | head -n 30
