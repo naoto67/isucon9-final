@@ -77,8 +77,8 @@ type CarInformation struct {
 }
 
 type SimpleCarInformation struct {
-	CarNumber int    `json:"car_number"`
-	SeatClass string `json:"seat_class"`
+	CarNumber int    `json:"car_number" db:"car_number"`
+	SeatClass string `json:"seat_class" db:"seat_class"`
 }
 
 type SeatInformation struct {

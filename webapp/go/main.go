@@ -683,16 +683,10 @@ SELECT s.*, r.* FROM seat_reservations s, reservations r WHERE r.date=? AND r.tr
 	// 各号車の情報
 
 	simpleCarInformationList := []SimpleCarInformation{}
-	seat := Seat{}
-	query = "SELECT * FROM seat_master WHERE train_class=? AND car_number=? ORDER BY seat_row, seat_column LIMIT 1"
-	i := 1
-	for {
-		err = dbx.Get(&seat, query, trainClass, i)
-		if err != nil {
-			break
-		}
-		simpleCarInformationList = append(simpleCarInformationList, SimpleCarInformation{i, seat.SeatClass})
-		i = i + 1
+	simpleCarInformationList, err = FetchSimpleCarInformationList(trainClass)
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, err.Error())
+		return
 	}
 
 	c := CarInformation{date.Format("2006/01/02"), trainClass, trainName, carNumber, seatInformationList, simpleCarInformationList}

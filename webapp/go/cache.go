@@ -10,6 +10,8 @@ var (
 	StationMasterDictName = make(map[string]Station)
 
 	FareMasterDict = make(map[string][]Fare)
+
+	SimpleCarInfomationDict = make(map[string][]SimpleCarInformation)
 )
 
 func initStationMasterDict() {
@@ -64,4 +66,20 @@ func FetchFare(trainClass, seatClass string) ([]Fare, error) {
 		return v, nil
 	}
 	return nil, sql.ErrNoRows
+}
+
+func FetchSimpleCarInformationList(trainClass string) ([]SimpleCarInformation, error) {
+	if v, ok := SimpleCarInfomationDict[trainClass]; ok {
+		return v, nil
+	}
+
+	query := "SELECT car_number, seat_class FROM seat_master WHERE train_class=? GROUP BY car_number, seat_class"
+	simpleCarInformationList := []SimpleCarInformation{}
+	err := dbx.Select(&simpleCarInformationList, query, trainClass)
+	if err != nil {
+		return nil, err
+	}
+	SimpleCarInfomationDict[trainClass] = simpleCarInformationList
+
+	return simpleCarInformationList, nil
 }
