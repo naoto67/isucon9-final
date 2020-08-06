@@ -39,7 +39,7 @@ type AuthResponse struct {
 
 const (
 	sessionName   = "session_isutrain"
-	availableDays = 10
+	availableDays = 14
 )
 
 var (
@@ -184,8 +184,7 @@ func fareCalc(date time.Time, depStation int, destStation int, trainClass, seatC
 
 	// 期間・車両・座席クラス倍率
 	fareList := []Fare{}
-	query := "SELECT * FROM fare_master WHERE train_class=? AND seat_class=? ORDER BY start_date"
-	err = dbx.Select(&fareList, query, trainClass, seatClass)
+	fareList, err = FetchFare(trainClass, seatClass)
 	if err != nil {
 		return 0, err
 	}
@@ -1308,6 +1307,7 @@ func main() {
 	defer dbx.Close()
 
 	initStationMasterDict()
+	initFareMaster()
 	// HTTP
 
 	mux := goji.NewMux()
