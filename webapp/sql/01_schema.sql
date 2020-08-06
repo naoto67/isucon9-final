@@ -79,7 +79,8 @@ CREATE TABLE `train_timetable_master` (
   `train_name` varchar(100) NOT NULL,
   `station` varchar(100) NOT NULL,
   `departure` time NOT NULL,
-  `arrival` time NOT NULL
+  `arrival` time NOT NULL,
+  INDEX primary_idx (`date`, `train_class`, `train_name`, `station`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 DROP TABLE IF EXISTS `users`;
