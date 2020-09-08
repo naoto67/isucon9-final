@@ -1,27 +1,32 @@
 package main
 
-import "database/sql"
+import (
+	"database/sql"
+	"fmt"
+)
 
 var (
 	StationMasterDictID   = make(map[int]Station)
 	StationMasterDictName = make(map[string]Station)
+
+	DistanceFareMasterArray = []DistanceFare{}
+
+	FareMasterDict = make(map[string][]Fare)
 )
 
-func initStationMasterDict() {
+func initStationMasterDict() error {
 	var stations []Station
 	err := dbx.Select(&stations, "SELECT * FROM station_master")
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	for _, v := range stations {
 		StationMasterDictID[v.ID] = v
 		StationMasterDictName[v.Name] = v
 	}
-
-	return
+	return nil
 }
-
 func FetchStationMasterByID(id int) (Station, error) {
 	v, ok := StationMasterDictID[id]
 	if ok {
@@ -36,4 +41,25 @@ func FetchStationMasterByName(name string) (Station, error) {
 		return v, nil
 	}
 	return Station{}, sql.ErrNoRows
+}
+
+func initDistanceFareMaster() error {
+	query := "SELECT * FROM distance_fare_master ORDER BY distance"
+	return dbx.Select(&DistanceFareMasterArray, query)
+}
+
+func initFareMasterDict() error {
+	FareMasterDict = make(map[string][]Fare)
+	query := "SELECT * FROM fare_master ORDER BY start_date"
+	var fares []Fare
+	err := dbx.Select(&fares, query)
+	if err != nil {
+		return err
+	}
+
+	for _, v := range fares {
+		key := fmt.Sprintf("%s-%s", v.TrainClass, v.SeatClass)
+		FareMasterDict[key] = append(FareMasterDict[key], v)
+	}
+	return nil
 }

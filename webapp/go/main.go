@@ -104,18 +104,10 @@ func secureRandomStr(b int) string {
 }
 
 func distanceFareHandler(w http.ResponseWriter, r *http.Request) {
-
-	distanceFareList := []DistanceFare{}
-
-	query := "SELECT * FROM distance_fare_master"
-	err := dbx.Select(&distanceFareList, query)
-	if err != nil {
-		errorResponse(w, http.StatusBadRequest, err.Error())
+	distanceFareList := DistanceFareMasterArray
+	if len(distanceFareList) == 0 {
+		errorResponse(w, http.StatusBadRequest, sql.ErrNoRows.Error())
 		return
-	}
-
-	for _, distanceFare := range distanceFareList {
-		fmt.Fprintf(w, "%#v, %#v\n", distanceFare.Distance, distanceFare.Fare)
 	}
 
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
@@ -123,13 +115,10 @@ func distanceFareHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getDistanceFare(origToDestDistance float64) (int, error) {
+	distanceFareList := DistanceFareMasterArray
 
-	distanceFareList := []DistanceFare{}
-
-	query := "SELECT distance,fare FROM distance_fare_master ORDER BY distance"
-	err := dbx.Select(&distanceFareList, query)
-	if err != nil {
-		return 0, err
+	if len(distanceFareList) == 0 {
+		return 0, sql.ErrNoRows
 	}
 
 	lastDistance := 0.0
@@ -183,12 +172,8 @@ func fareCalc(date time.Time, depStation int, destStation int, trainClass, seatC
 
 	// 期間・車両・座席クラス倍率
 	fareList := []Fare{}
-	query := "SELECT * FROM fare_master WHERE train_class=? AND seat_class=? ORDER BY start_date"
-	err = dbx.Select(&fareList, query, trainClass, seatClass)
-	if err != nil {
-		return 0, err
-	}
-
+	key := fmt.Sprintf("%s-%s", trainClass, seatClass)
+	fareList, _ = FareMasterDict[key]
 	if len(fareList) == 0 {
 		return 0, fmt.Errorf("fare_master does not exists")
 	}
@@ -1236,6 +1221,22 @@ func initializeHandler(w http.ResponseWriter, r *http.Request) {
 	dbx.Exec("TRUNCATE reservations")
 	dbx.Exec("TRUNCATE users")
 
+	err := initStationMasterDict()
+	if err != nil {
+		log.Fatalln("initStationMasterDict: err", err)
+		return
+	}
+	err = initDistanceFareMaster()
+	if err != nil {
+		log.Fatalln("initDistanceFareMaster: err", err)
+		return
+	}
+	err = initFareMasterDict()
+	if err != nil {
+		log.Fatalln("initFareMasterDict: err", err)
+		return
+	}
+
 	resp := InitializeResponse{
 		availableDays,
 		"golang",
@@ -1306,7 +1307,6 @@ func main() {
 	}
 	defer dbx.Close()
 
-	initStationMasterDict()
 	// HTTP
 
 	mux := goji.NewMux()
