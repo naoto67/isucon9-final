@@ -573,12 +573,10 @@ func trainSeatsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	seatList := []Seat{}
-
-	query = "SELECT * FROM seat_master WHERE train_class=? AND car_number=? ORDER BY seat_row, seat_column"
-	err = dbx.Select(&seatList, query, trainClass, carNumber)
-	if err != nil {
-		errorResponse(w, http.StatusBadRequest, err.Error())
+	key := fmt.Sprintf("%s-%d", trainClass, carNumber)
+	seatList, ok := SeatMasterDict[key]
+	if !ok {
+		errorResponse(w, http.StatusBadRequest, sql.ErrNoRows.Error())
 		return
 	}
 
@@ -668,15 +666,16 @@ SELECT s.*, r.* FROM seat_reservations s, reservations r WHERE r.date=? AND r.tr
 	// 各号車の情報
 
 	simpleCarInformationList := []SimpleCarInformation{}
-	seat := Seat{}
 	query = "SELECT * FROM seat_master WHERE train_class=? AND car_number=? ORDER BY seat_row, seat_column LIMIT 1"
+
 	i := 1
 	for {
-		err = dbx.Get(&seat, query, trainClass, i)
-		if err != nil {
+		key := fmt.Sprintf("%s-%d", trainClass, i)
+		seatList, ok := SeatMasterDict[key]
+		if !ok {
 			break
 		}
-		simpleCarInformationList = append(simpleCarInformationList, SimpleCarInformation{i, seat.SeatClass})
+		simpleCarInformationList = append(simpleCarInformationList, SimpleCarInformation{i, seatList[0].SeatClass})
 		i = i + 1
 	}
 
@@ -1234,6 +1233,11 @@ func initializeHandler(w http.ResponseWriter, r *http.Request) {
 	err = initFareMasterDict()
 	if err != nil {
 		log.Fatalln("initFareMasterDict: err", err)
+		return
+	}
+	err = initSeatMasterDict()
+	if err != nil {
+		log.Fatalln("initSeatMasterDict: err", err)
 		return
 	}
 
