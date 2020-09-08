@@ -32,3 +32,6 @@ restart:
 alp:
 	sudo cat webapp/nginx/conf.d/access.log | alp ltsv -r --sort=sum | head -n 30
 	sudo cat webapp/nginx/conf.d/access.log | alp ltsv -r --sort=sum --filters 'Method in ["GET"]' | head -n 30
+
+mysql_console:
+	mysql -uroot -p -h 0.0.0.0 -P 13306 isutrain

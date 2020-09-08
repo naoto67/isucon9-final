@@ -24,6 +24,7 @@ type Fare struct {
 }
 
 type Train struct {
+	ID           int       `json:"-" db:"id"`
 	Date         time.Time `json:"date" db:"date"`
 	DepartureAt  string    `json:"departure_at" db:"departure_at"`
 	TrainClass   string    `json:"train_class" db:"train_class"`
